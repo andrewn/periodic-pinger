@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+
+var url  = require('url'),
+    http = require('http');
+
+var intervalSecs = process.env['INTERVAL_SECS'],
+    pingUrl        = process.env['PING_URL'],
+    intervalMs,
+    parsedUrl;
+
+if (!intervalSecs) {
+  console.error('No ping interval given (INTERVAL_SECS)');
+  process.exit();
+}
+
+intervalMs = intervalSecs * 1000;
+
+if (!pingUrl) {
+  console.error('No ping URL given (PING_URL)');
+  process.exit();
+}
+
+scheduleNextPing(intervalMs);
+
+function ping() {
+  console.log('Ping', pingUrl);
+
+  http.get(pingUrl, function(res) {
+    console.log("Got response: " + res.statusCode);
+    scheduleNextPing(intervalMs);
+  }).on('error', function(e) {
+    console.log("Got error: " + e.message);
+    scheduleNextPing(intervalMs * 2)
+  });
+}
+
+function scheduleNextPing(interval) {
+  console.log('Next ping in %s ms', interval);
+  setTimeout(ping, interval);
+}
